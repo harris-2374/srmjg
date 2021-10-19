@@ -1,6 +1,14 @@
 # Short Read Mapping Job Generator (srmjg)
 Short Read Mapping Job Generator creates job files for short read mapping pipelines and aims to standardize the commands used.
 
+# Installation
+To install srmjg, clone the git respository locally and run the pip installation
+
+    $ git clone https://github.com/harris-2374/srmjg.git
+    $ cd srmjg
+    $ pip install .
+
+
 # Dependencies
 Pandas is the only required dependency, but if you plan to use .xlsx files you will also need openpyxl. Below are commands for conda enviornments and python virtual environments.
 
@@ -61,6 +69,19 @@ There are two ways to create jobs, through a config file or by command line argu
     --bash_config         config.ini file with BASH arguments
     --threads             Number of threads/cpus per-job
 
+# Example Commands
+    SLURM command with configuration file:
+        $ srmjg -i ./tests/input.xlsx -o ./tests/output --scheduler BASH --bash_config ./tests/BASH_config.ini
+    
+    SLURM command without configuration file:
+        $ srmjg -i test_txt.txt -o path/to/output --pdir project/dir/path --scheduler SLURM --slurm_jobtype scsn --slurm_config SLURM_config.ini --tmp 10240
+    
+    BASH command with configuration file:
+        $ srmjg -i ./tests/input.xlsx -o ./tests/output --scheduler BASH --bash_config ./tests/BASH_config.ini
+
+    BASH command without configuration file:
+        $ srmjg -i ./tests/input.xlsx -o ./tests/output --scheduler BASH --pdir project/dir/path --threads 5
+
 
 # Supported SLURM arguments
     1. #SBATCH --time=<time>
@@ -110,18 +131,6 @@ There are two ways to create jobs, through a config file or by command line argu
     project_directory = project/dir/path
     threads = 1
 
-# Example Commands
-    SLURM command with configuration file:
-        $ srmjg -i ./tests/input.xlsx -o ./tests/output --scheduler BASH --bash_config ./tests/BASH_config.ini
-    
-    SLURM command without configuration file:
-        $ srmjg -i test_txt.txt -o path/to/output --pdir project/dir/path --scheduler SLURM --slurm_jobtype scsn --slurm_config SLURM_config.ini --tmp 10240
-    
-    BASH command with configuration file:
-        $ srmjg -i ./tests/input.xlsx -o ./tests/output --scheduler BASH --bash_config ./tests/BASH_config.ini
-
-    BASH command without configuration file:
-        $ srmjg -i ./tests/input.xlsx -o ./tests/output --scheduler BASH --pdir project/dir/path --threads 5
 
 # SLURM Limitations
 Currently, srmjg does not support GPU jobs and only provides a subset of commonly used SLURM arguments. Open an issue if you would like other features to be added in future versions.
