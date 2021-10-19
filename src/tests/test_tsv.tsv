@@ -1,0 +1,5 @@
+SampleID	SampleSRR	SampleR1	SampleR2	ReferenceID	ReferencePath
+Sample1	SRR12345	Sample1_R1.fasta	Sample1_R2.fasta	RefSample1	RefSample1.fasta
+Sample2	SRR12346	Sample2_R1.fasta	Sample2_R2.fasta	RefSample1	RefSample1.fasta
+Sample1	SRR12345	Sample1_R1.fasta	Sample1_R2.fasta	RefSample2	RefSample2.fasta
+Sample2	SRR12346	Sample2_R1.fasta	Sample2_R2.fasta	RefSample2	RefSample2.fasta
