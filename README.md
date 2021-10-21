@@ -27,8 +27,7 @@ srmjg takes in a tab or comma delimited file with five required column headers. 
 | SampleB | SampleLibB | SRR789101 | /path/to/SampleB_R1.fastq | /path/to/SampleB_R2.fastq | Reference2 | /path/to/Reference2.fasta |
 
 
-# bwa-mem2 Pipeline:
-## - Alignment -
+# bwa-mem2 Alignment Pipeline:
 ### _Steps_:
     1. bwa-mem2
     2. Samtools view
