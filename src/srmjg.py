@@ -568,7 +568,7 @@ def main():
         type=str,
         choices=['bwa-mem2'],
         default='bwa-mem2',
-        help='Type of job file to create',
+        help='Mapping pipeline',
     )
     parser.add_argument(
         '--scheduler',
