@@ -1,91 +1,8 @@
 """
 Author: Andrew Harris
-Python 3.9.5
-Version: 0.0.2
-Last update: 9/13/2021
-
-Dependencies:
-    1. pandas
-    2. openpyxl
-
-Summary: 
-This project aims to generate SLURM and Unix bash files for a large sample sets.
-
-Known Limitations:
-    SLURM:
-        1. Does not work with GPU jobs
-        2. Does not support job arrays
-
-
-Input:
-    1. .xlsx, .tsv, or .csv file
-        - Required Columns: [SampleID | SampleSRR | SampleR1 | SampleR2 | ReferenceID | ReferencePath]
-    2. Configuration file with SLURM or BASH parameters
-        SLURM Specs:
-            - ; separated list of modules to upload
-                - Can be things like 'module load ...;module load ...' or 'module load Anaconda;source activate env'
-
-
-Automatically Filled SLURM parameters:
-    1. <jobname>
-        - #SBATCH --job-name=SampleID_to_ReferenceID
-        Will also set stdout and stderr filenames
-        - #SBATCH --output=SampleID_to_ReferenceID.%j
-        - #SBATCH --error=SampleID_to_ReferenceID.%j
-
-
-Supported Slurm arguments:
-    1. <time> - (required)
-        - #SBATCH --time=<time>
-        - Input style = day-hr/min/sec
-    2. <queue> - (required)
-        - #SBATCH --partition=<queue>
-        - TAMU HPRC options: short, medium, long, xlong
-    3. <ntasks> - (required)
-        - #SBATCH --ntasks=<ntasks>
-    4. <cpus-per-task> - (optional)
-        - #SBATCH --cpus-per-task=<cpus-per-task>
-    5. <memory> - (required)
-        - #SBATCH --mem=<memory>
-        - Provided as: value[K|M|G|T]
-    6. <accountnumber> - (optional)
-        - #SBATCH --account=<accountnumber>
-    7. <tasks-per-node> - (optional)
-        - #SBATCH --ntasks-per-node=<tasks-per-node>
-    8. <email> - (optional)
-        - ##SBATCH --mail-user=<email>    #Send all emails to email_address
-        - Auto set this value when email is provided - ##SBATCH --mail-type=ALL
-    9. <nodes>
-        - #SBATCH --nodes=[min[-max]]
-    10. <tmp>
-        - #SBATCH --tmp=<tmp>
-        - Provide in MB
-        - If provided, return all but last output to $TMPDIR
-
-
-Desired Functionality:
-    - Set "RG@LB:" in readgroup to SampleID_ReferenceID
-    - Basic output filename structure is SampleID_to_ReferenceID.suffix
-
-
-Output:
-    1. SLURM
-        - .sh file per-sample
-        - run_jobs.sh which contains 'sbatch sampleJob1.sh & sampleJob2.sh & ...'
-    2. UNIX
-        - .sh files per-file
-        - run_jobs.sh which contains 'sampleJob1.sh & sampleJob2.sh & ...'
-
-
-bwa-mem2 Pipeline:
-    1. bwa-mem2
-    2. Samtools view
-    3. GATK MarkDuplicatesSpark
-
-
-Helpful Info:
-    - TAMU HPRC Grace Wiki with more info: https://hprc.tamu.edu/wiki/Grace:Batch
-
+Email: ajharris@cvm.tamu.edu
+Version: 0.0.3
+Last update: 10/21/2021
 """
 import argparse
 import configparser
@@ -167,7 +84,7 @@ def get_input_df(INPUT_PATH, logger):
         df = pd.read_csv(INPUT_PATH, sep='\t')
     # Check headers are valid
     try:
-        header_list = ['SampleID', 'SampleSRR', 'SampleR1', 'SampleR2', 'ReferenceID', 'ReferencePath']
+        header_list = ['QueryID', 'QueryLibID', 'QueryRun', 'QueryR1', 'QueryR2', 'ReferenceID', 'ReferencePath']
         if df.columns.to_list() != header_list:
             raise InvalidHeader
     except InvalidHeader:
@@ -251,8 +168,8 @@ def generate_SLRUM_JobFiles(
     logger,
 ):
     def slurm_header(
-        sampleid,
-        refid,
+        sampleID,
+        refID,
         SLURM_JOBTYPE,
         SLURM_TIME,
         SLURM_NODES,
@@ -282,12 +199,12 @@ def generate_SLRUM_JobFiles(
             """
             # -- Required headers --
             header.append("#!/bin/bash")
-            header.append(f"#SBATCH --job-name={sampleid}_to_{refid}")
+            header.append(f"#SBATCH --job-name={sampleID}_to_{refID}")
             header.append(f"#SBATCH --time={SLURM_TIME}")
             header.append(f"#SBATCH --ntasks={SLURM_NTASKS}")
             header.append(f"#SBATCH --mem={SLURM_MEMORY}")
-            header.append(f"#SBATCH --output={sampleid}_to_{refid}.%j")
-            header.append(f"#SBATCH --error={sampleid}_to_{refid}.%j")
+            header.append(f"#SBATCH --output={sampleID}_to_{refID}.%j")
+            header.append(f"#SBATCH --error={sampleID}_to_{refID}.%j")
             header.append(f"\n## OPTIONAL JOB SPECIFICATIONS")
             if len(SLURM_TIME.split("-")) > 1:
                 split = SLURM_TIME.split("-")
@@ -336,13 +253,13 @@ def generate_SLRUM_JobFiles(
             """
             # -- Required headers --
             header.append("#!/bin/bash")
-            header.append(f"#SBATCH --job-name={sampleid}_to_{refid}")
+            header.append(f"#SBATCH --job-name={sampleID}_to_{refID}")
             header.append(f"#SBATCH --time={SLURM_TIME}")
             header.append(f"#SBATCH --nodes=1")
             header.append(f"#SBATCH --ntasks-per-node={SLURM_TASKS_PER_NODE}")
             header.append(f"#SBATCH --mem={SLURM_MEMORY}")
-            header.append(f"#SBATCH --output={sampleid}_to_{refid}.%j")
-            header.append(f"#SBATCH --error={sampleid}_to_{refid}.%j")
+            header.append(f"#SBATCH --output={sampleID}_to_{refID}.%j")
+            header.append(f"#SBATCH --error={sampleID}_to_{refID}.%j")
             header.append(f"\n## OPTIONAL JOB SPECIFICATIONS")
             if len(SLURM_TIME.split("-")) > 1:
                 split = SLURM_TIME.split("-")
@@ -391,13 +308,13 @@ def generate_SLRUM_JobFiles(
             """
             # -- Required headers --
             header.append("#!/bin/bash")
-            header.append(f"#SBATCH --job-name={sampleid}_to_{refid}")
+            header.append(f"#SBATCH --job-name={sampleID}_to_{refID}")
             header.append(f"#SBATCH --time={SLURM_TIME}")
             header.append(f"#SBATCH --ntasks={SLURM_NTASKS}")
             header.append(f"#SBATCH --ntasks-per-node={SLURM_TASKS_PER_NODE}")
             header.append(f"#SBATCH --mem={SLURM_MEMORY}")
-            header.append(f"#SBATCH --output={sampleid}_to_{refid}.%j")
-            header.append(f"#SBATCH --error={sampleid}_to_{refid}.%j")
+            header.append(f"#SBATCH --output={sampleID}_to_{refID}.%j")
+            header.append(f"#SBATCH --error={sampleID}_to_{refID}.%j")
             header.append(f"\n## OPTIONAL JOB SPECIFICATIONS")
             if len(SLURM_TIME.split("-")) > 1:
                 split = SLURM_TIME.split("-")
@@ -446,13 +363,13 @@ def generate_SLRUM_JobFiles(
             """
             # -- Required headers --
             header.append("#!/bin/bash")
-            header.append(f"#SBATCH --job-name={sampleid}_to_{refid}")
+            header.append(f"#SBATCH --job-name={sampleID}_to_{refID}")
             header.append(f"#SBATCH --time={SLURM_TIME}")
             header.append(f"#SBATCH --ntasks={SLURM_NTASKS}")
             header.append(f"#SBATCH --ntasks-per-node={SLURM_TASKS_PER_NODE}")
             header.append(f"#SBATCH --mem={SLURM_MEMORY}")
-            header.append(f"#SBATCH --output={sampleid}_to_{refid}.%j")
-            header.append(f"#SBATCH --error={sampleid}_to_{refid}.%j")
+            header.append(f"#SBATCH --output={sampleID}_to_{refID}.%j")
+            header.append(f"#SBATCH --error={sampleID}_to_{refID}.%j")
             header.append(f"\n## OPTIONAL JOB SPECIFICATIONS")
             if len(SLURM_TIME.split("-")) > 1:
                 split = SLURM_TIME.split("-")
@@ -484,12 +401,12 @@ def generate_SLRUM_JobFiles(
             header.append(f"{SLURM_MODULES}")
             return header
 
-    sampleid, samplesrr, sampler1, sampler2, refid, refpath = row
-    output_filename = OUTPUT_PATH / f"{sampleid}_to_{refid}.sh"
+    sampleID, sampleLibID, sampleRun, sampleR1, sampleR2, refID, refPath = row
+    output_filename = OUTPUT_PATH / f"{sampleID}_to_{refID}.sh"
     # -- Generate header --
     header = slurm_header(
-        sampleid,
-        refid,
+        sampleID,
+        refID,
         SLURM_JOBTYPE,
         SLURM_TIME,
         SLURM_NODES,
@@ -505,14 +422,14 @@ def generate_SLRUM_JobFiles(
     # -- Generate command --
     if PIPELINE == 'bwa-mem2':
         logger.debug(f"Running {PIPELINE} Pipeline")
-        sample_unsorted_bam = SLURM_BAM_OUTDIR / f"{sampleid}_to_{refid}.bam"
-        sample_markdups_bam = SLURM_BAM_OUTDIR / f"{sampleid}_to_{refid}.sort.md.bam"
-        sample_markdups_metrics = SLURM_BAM_OUTDIR / f"{sampleid}_to_{refid}.sort.md.metrics.txt"
-        sample_completion_file = SLURM_OUTDIR / f"{sampleid}_to_{refid}.complete"
+        sample_unsorted_bam = SLURM_BAM_OUTDIR / f"{sampleID}_to_{refID}.bam"
+        sample_markdups_bam = SLURM_BAM_OUTDIR / f"{sampleID}_to_{refID}.sort.md.bam"
+        sample_markdups_metrics = SLURM_BAM_OUTDIR / f"{sampleID}_to_{refID}.sort.md.metrics.txt"
+        sample_completion_file = SLURM_OUTDIR / f"{sampleID}_to_{refID}.complete"
         if SLURM_TMPDIR:
-            command = Rf"""bwa-mem2 -t 16 -Y -R \"@RG\tID:{sampleid}\tPL:ILLUMINA\tLB:{sampleid}_to_{refid}\tDS:{sampleid}_{samplesrr}\tPU:{sampleid}_{samplesrr}\tSM:{sampleid}\" {refpath} {sampler1} {sampler2} | samtools view -bS - > $TMPDIR/{sample_unsorted_bam.name}; gatk MarkDuplicatesSpark -I $TMPDIR/{sample_unsorted_bam.name} -O {sample_markdups_bam.as_posix()} -M {sample_markdups_metrics.as_posix()} --conf 'spark.executor.cores={SLURM_CPUS}' && touch {sample_completion_file.as_posix()}"""
+            command = Rf"""bwa-mem2 -t {SLURM_CPUS} -Y -R \"@RG\tID:{sampleID}\tPL:ILLUMINA\tLB:{sampleLibID}\tDS:{sampleID}_{sampleRun}\tPU:{sampleID}_{sampleRun}\tSM:{sampleID}\" {refPath} {sampleR1} {sampleR2} | samtools view -bS - > $TMPDIR/{sample_unsorted_bam.name}; gatk MarkDuplicatesSpark -I $TMPDIR/{sample_unsorted_bam.name} -O {sample_markdups_bam.as_posix()} -M {sample_markdups_metrics.as_posix()} --conf 'spark.executor.cores={SLURM_CPUS}' && touch {sample_completion_file.as_posix()}"""
         else:
-            command = Rf"""bwa-mem2 -t 16 -Y -R \"@RG\tID:{sampleid}\tPL:ILLUMINA\tLB:{sampleid}_to_{refid}\tDS:{sampleid}_{samplesrr}\tPU:{sampleid}_{samplesrr}\tSM:{sampleid}\" {refpath} {sampler1} {sampler2} | samtools view -bS - > {sample_unsorted_bam.as_posix()}; gatk MarkDuplicatesSpark -I {sample_unsorted_bam.as_posix()} -O {sample_markdups_bam.as_posix()} -M {sample_markdups_metrics.as_posix()} --conf 'spark.executor.cores={SLURM_CPUS}' && touch {sample_completion_file.as_posix()}"""
+            command = Rf"""bwa-mem2 -t {SLURM_CPUS} -Y -R \"@RG\tID:{sampleID}\tPL:ILLUMINA\tLB:{sampleLibID}\tDS:{sampleID}_{sampleRun}\tPU:{sampleID}_{sampleRun}\tSM:{sampleID}\" {refPath} {sampleR1} {sampleR2} | samtools view -bS - > {sample_unsorted_bam.as_posix()}; gatk MarkDuplicatesSpark -I {sample_unsorted_bam.as_posix()} -O {sample_markdups_bam.as_posix()} -M {sample_markdups_metrics.as_posix()} --conf 'spark.executor.cores={SLURM_CPUS}' && touch {sample_completion_file.as_posix()}"""
         logger.debug(f"{command}")
     return output_filename, header_formatted, command
 
@@ -527,16 +444,16 @@ def generate_BASH_JobFiles(
     PIPELINE,
     logger,
 ):
-    sampleid, samplesrr, sampler1, sampler2, refid, refpath = row
-    output_filename = OUTPUT_PATH / f"{sampleid}_to_{refid}.sh"
+    sampleID, sampleLibID, sampleRun, sampleR1, sampleR2, refID, refPath = row
+    output_filename = OUTPUT_PATH / f"{sampleID}_to_{refID}.sh"
     # -- Generate command --
     if PIPELINE == 'bwa-mem2':
         logger.debug(f"Running {PIPELINE} Pipeline")
-        sample_unsorted_bam = BASH_BAM_OUTDIR / f"{sampleid}_to_{refid}.bam"
-        sample_markdups_bam = BASH_BAM_OUTDIR / f"{sampleid}_to_{refid}.sort.md.bam"
-        sample_markdups_metrics = BASH_BAM_OUTDIR / f"{sampleid}_to_{refid}.sort.md.metrics.txt"
-        sample_completion_file = BASH_OUTDIR / f"{sampleid}_to_{refid}.complete"
-        command = Rf"""bwa-mem2 -t 16 -Y -R \"@RG\tID:{sampleid}\tPL:ILLUMINA\tLB:{sampleid}_to_{refid}\tDS:{sampleid}_{samplesrr}\tPU:{sampleid}_{samplesrr}\tSM:{sampleid}\" {refpath} {sampler1} {sampler2} | samtools view -bS - > {sample_unsorted_bam.as_posix()}; gatk MarkDuplicatesSpark -I {sample_unsorted_bam.as_posix()} -O {sample_markdups_bam.as_posix()} -M {sample_markdups_metrics.as_posix()} --conf 'spark.executor.cores={BASH_CPU}' && touch {sample_completion_file.as_posix()}"""
+        sample_unsorted_bam = BASH_BAM_OUTDIR / f"{sampleID}_to_{refID}.bam"
+        sample_markdups_bam = BASH_BAM_OUTDIR / f"{sampleID}_to_{refID}.sort.md.bam"
+        sample_markdups_metrics = BASH_BAM_OUTDIR / f"{sampleID}_to_{refID}.sort.md.metrics.txt"
+        sample_completion_file = BASH_OUTDIR / f"{sampleID}_to_{refID}.complete"
+        command = Rf"""bwa-mem2 -t {BASH_CPU} -Y -R \"@RG\tID:{sampleID}\tPL:ILLUMINA\tLB:{sampleLibID}\tDS:{sampleID}_{sampleRun}\tPU:{sampleID}_to_{refID}\tSM:{sampleID}\" {refPath} {sampleR1} {sampleR2} | samtools view -bS - > {sample_unsorted_bam.as_posix()}; gatk MarkDuplicatesSpark -I {sample_unsorted_bam.as_posix()} -O {sample_markdups_bam.as_posix()} -M {sample_markdups_metrics.as_posix()} --conf 'spark.executor.cores={BASH_CPU}' && touch {sample_completion_file.as_posix()}"""
         logger.debug(f"{command}")
     return output_filename, command
 
@@ -551,7 +468,7 @@ def main():
         type=str,
         action='store',
         default=None,
-        help=".xlsx, .tsv, or .csv file - Required column headers = [SampleID | SampleSRR | SampleR1 | SampleR2 | ReferenceID | ReferencePath]",
+        help=".xlsx, .tsv, or .csv file - Required column headers = [sampleID | sampleRun | sampleR1 | sampleR2 | ReferenceID | ReferencePath]",
         metavar='',
     )
     parser.add_argument(
@@ -748,6 +665,8 @@ def main():
     if len(sys.argv)==1:
         parser.print_help(sys.stderr)
         sys.exit(1)
+    else:
+        pass
     # --- Ensure input is a valid path ---
     try:
         OUTPUT_PATH = Path(OUTPUT_RAW)
@@ -776,7 +695,7 @@ def main():
     df = get_input_df(INPUT_PATH, logger)
     # --- Log basic info about input ---
     numRefs = len(df["ReferenceID"].unique())
-    numSamples = len(df["SampleID"].unique())
+    numSamples = len(df["QueryID"].unique())
     logger.info("===============================")
     logger.info("*** Input Info ***")
     logger.info(f"Scheduler: {SCHEDULER}")

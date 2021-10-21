@@ -1,7 +1,7 @@
 # Short Read Mapping Job Generator (srmjg)
 Short Read Mapping Job Generator creates job files for short read mapping pipelines and aims to standardize the commands used.
 
-# Installation
+# Installation:
 To install srmjg, clone the git respository locally and run the pip installation
 
     $ git clone https://github.com/harris-2374/srmjg.git
@@ -9,24 +9,35 @@ To install srmjg, clone the git respository locally and run the pip installation
     $ pip install .
 
 
-# Dependencies
+# Dependencies:
 Pandas is the only required dependency, but if you plan to use .xlsx files you will also need openpyxl. Below are commands for conda enviornments and python virtual environments.
 
     $ conda install python=3.9.5 pandas openpyxl 
     - or - 
     $ pip install -r requirements.txt
 
-# Input file format
+# Input file format:
 srmjg takes in a tab or comma delimited file with five required column headers. Each row represents an individual mapping event, so this can be used to make mass job files with a combination of reference-query pairs. 
 
-    SampleID | SampleSRR | SampleR1    | SampleR2	 | ReferenceID | ReferencePath
-    -------- | --------- | ----------  | ----------  | ----------- | ----------------
-    SampleA  | SRR123456 | sA_R1.fasta | sA_R2.fasta | Reference1  | Reference1.fasta
-    SampleB  | SRR789101 | sB_R1.fasta | sB_R2.fasta | Reference1  | Reference1.fasta
-    SampleA  | SRR123456 | sA_R1.fasta | sA_R2.fasta | Reference2  | Reference2.fasta
-    SampleB  | SRR789101 | sB_R1.fasta | sB_R2.fasta | Reference2  | Reference2.fasta
+| QueryID | QueryLibID | QueryRun | QueryR1 | QueryR2 | ReferenceID | ReferencePath |
+| :-------: | :-------: | :-------: | :-------: | :-------: | :-------: | :-------: |
+| SampleA | SampleLibA | SRR123456 | /path/to/SampleA_R1.fastq | /path/to/SampleA_R2.fastq | Reference1 | /path/to/Reference1.fasta |
+| SampleB | SampleLibB | SRR789101 | /path/to/SampleB_R1.fastq | /path/to/SampleB_R2.fastq | Reference1 | /path/to/Reference1.fasta |
+| SampleA | SampleLibB | SRR123456 | /path/to/SampleA_R1.fastq | /path/to/SampleA_R2.fastq | Reference2 | /path/to/Reference2.fasta |
+| SampleB | SampleLibB | SRR789101 | /path/to/SampleB_R1.fastq | /path/to/SampleB_R2.fastq | Reference2 | /path/to/Reference2.fasta |
 
-# Usage
+
+# bwa-mem2 Pipeline:
+## - Alignment -
+### _Steps_:
+    1. bwa-mem2
+    2. Samtools view
+    3. GATK MarkDuplicatesSpark
+    
+### _Command_:
+    bwa-mem2 -t {CPU_COUNT} -Y -R \"@RG\tID:{queryID}\tPL:ILLUMINA\tLB:{queryID}_to_{refID}\tDS:{queryID}_{queryRun}\tPU:{queryID}_{queryRun}\tSM:{queryID}\" {refpath} {queryR1} {queryR2} | samtools view -bS - > {query_unsorted_bam}; gatk MarkDuplicatesSpark -I {query_unsorted_bam} -O {query_markdups_bam} -M {query_markdups_metrics} --conf 'spark.executor.cores={CPU_COUNT}'
+
+# Usage:
 srmjg currently supports two different job script types, SLURM job files and bash files for local runs. The SLURM job scripts are based on Texas A&M High Performance Research Computing's SLURM scheduler on their Grace cluster. Visit their [wiki](https://hprc.tamu.edu/wiki/Grace:Batch) for more information on the scheduler and examples of job script types. 
 
 There are two ways to create jobs, through a config file or by command line arguments. Config files are reccomended as they are easier to set up and are better for tracking and reproducibility purposes.
@@ -35,8 +46,8 @@ There are two ways to create jobs, through a config file or by command line argu
 
     optional arguments:
     -h, --help            show this help message and exit
-    -i , --input          .xlsx, .tsv, or .csv file - Required column headers = [SampleID | SampleSRR | SampleR1 | SampleR2 | ReferenceID | ReferencePath]
-    -o , --output         Output location - default: cwd
+    -i , --input          .xlsx, .tsv, or .csv file - Required column headers = [QueryID | QueryLibID | QueryRun | QueryR1 | QueryR2 | ReferenceID | ReferencePath]
+    -o , --output         Output location to write job files - default: cwd
     --pipeline {bwa-mem2}
                             Type of job file to create
     --scheduler {SLURM,BASH}
@@ -48,7 +59,7 @@ There are two ways to create jobs, through a config file or by command line argu
                             Output SLURM parameter input config file
     --bash_config_template
                             Output SLURM parameter input config file
-    --pdir                Output directory for job scripts - Path where intermediate and final job files will be written to.
+    --pdir                Output directory for job scripts - Path where intermediate and final job files will be written to on cluster or local server.
 
     SLURM arguments:
     --slurm_config        config.ini file with SLURM arguments
@@ -69,7 +80,7 @@ There are two ways to create jobs, through a config file or by command line argu
     --bash_config         config.ini file with BASH arguments
     --threads             Number of threads/cpus per-job
 
-# Example Commands
+# Example Commands:
     SLURM command with configuration file:
         $ srmjg -i ./tests/input.xlsx -o ./tests/output --scheduler BASH --bash_config ./tests/BASH_config.ini
     
@@ -83,7 +94,7 @@ There are two ways to create jobs, through a config file or by command line argu
         $ srmjg -i ./tests/input.xlsx -o ./tests/output --scheduler BASH --pdir project/dir/path --threads 5
 
 
-# Supported SLURM arguments
+# Supported SLURM arguments:
     1. #SBATCH --time=<time>
         - Input style = day-hr:min:sec
 
@@ -110,7 +121,7 @@ There are two ways to create jobs, through a config file or by command line argu
         - Provide in MB
         - If provided, writes all but last output file to $TMPDIR
 
-# Example SLURM config file (i.e. slurm_config.ini)
+# Example SLURM config file (i.e. slurm_config.ini):
     [SLURM INPUT]
     project_directory = project/dir/path
     job_type = snsc
@@ -126,13 +137,13 @@ There are two ways to create jobs, through a config file or by command line argu
     tmp = 
     modules = 
 
-# Example Bash config file (i.e. bash_config.ini)
+# Example Bash config file (i.e. bash_config.ini):
     [BASH INPUT]
     project_directory = project/dir/path
     threads = 1
 
 
-# SLURM Limitations
+# SLURM Limitations:
 Currently, srmjg does not support GPU jobs and only provides a subset of commonly used SLURM arguments. Open an issue if you would like other features to be added in future versions.
 
 
