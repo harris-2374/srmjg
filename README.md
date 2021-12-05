@@ -17,7 +17,7 @@ Pandas is the only required dependency, but if you plan to use .xlsx files you w
     $ pip install -r requirements.txt
 
 # Input file format:
-srmjg takes in a tab or comma delimited file with five required column headers. Each row represents an individual mapping event, so this can be used to make mass job files with a combination of reference-query pairs. 
+srmjg takes a tab or comma delimited file with five required column headers. Each row represents an individual mapping event, so this can be used to make mass job files with a combination of reference-query pairs. 
 
 | QueryID | QueryLibID | QueryRun | QueryR1 | QueryR2 | ReferenceID | ReferencePath |
 | :-------: | :-------: | :-------: | :-------: | :-------: | :-------: | :-------: |
@@ -80,10 +80,10 @@ There are two ways to create jobs, through a config file or by command line argu
 
 # Example Commands:
     SLURM command with configuration file:
-        $ srmjg -i ./tests/input.xlsx -o ./tests/output --scheduler BASH --bash_config ./tests/BASH_config.ini
+        $ srmjg -i ./tests/input.xlsx -o ./tests/output --scheduler SLURM --slurm_config SLURM_config.ini
     
     SLURM command without configuration file:
-        $ srmjg -i test_txt.txt -o path/to/output --pdir project/dir/path --scheduler SLURM --slurm_jobtype scsn --slurm_config SLURM_config.ini --tmp 10240
+        $ srmjg -i test_txt.txt -o ./tests/output --scheduler SLURM --pdir project/dir/path --slurm_jobtype scsn --slurm_config SLURM_config.ini --tmp 10240
     
     BASH command with configuration file:
         $ srmjg -i ./tests/input.xlsx -o ./tests/output --scheduler BASH --bash_config ./tests/BASH_config.ini
