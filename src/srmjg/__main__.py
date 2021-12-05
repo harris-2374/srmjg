@@ -1,7 +1,7 @@
 """
 Author: Andrew Harris
 Email: ajharris@cvm.tamu.edu
-Version: 0.0.3
+Version: 0.0.4
 Last update: 10/21/2021
 """
 import argparse
@@ -110,7 +110,7 @@ def project_dir_setup_script(OUTPUT_PATH, logger):
 # --- Config Template Functions ---
 def slurm_config_template(outFile):
     with open(outFile, 'w') as oh:
-        oh.write("""[SLURM INPUT]\nproject_directory = project/dir/path\njob_type = snsc\ntime = 7:00:00\nqueue = medium\nnodes = 1\ntasks_per_node = 1\nntasks = 1\ncpus_per_task = 48\nmemory = 10G\naccount = \nemail = \ntmp = \nmodules = """)
+        oh.write("""[SLURM INPUT]\nproject_directory = project/dir/path\njob_type = scsn\ntime = 7:00:00\nqueue = medium\nnodes = 1\ntasks_per_node = 1\nntasks = 1\ncpus_per_task = 48\nmemory = 10G\naccount = \nemail = \ntmp = \nmodules = """)
         return
 
 
@@ -725,8 +725,12 @@ def main():
             try:
                 SLURM_TMPDIR = int(config['SLURM INPUT']['tmp'])
             except ValueError:
-                logger.info(f"Invalid value for tmp - must be integer larger than 10240")
-                exit(1)
+                if not config['SLURM INPUT']['tmp']:
+                    SLURM_TMPDIR = None
+                    pass
+                else:
+                    logger.info(f"Invalid value for tmp - must be integer larger than 10240")
+                    exit(1)
             try:
                 if not SLURM_MODULES:
                     raise NoModulesFound
