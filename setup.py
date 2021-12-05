@@ -22,12 +22,12 @@ setup(
     ],
     description=" Short Read Mapping Job Generator creates job files for short read mapping pipelines and aims to standardize the commands used.",
     package_dir = {"": "src"},
-    package_data={'src': ['tests/*']},
-    scripts = ['src/srmjg.py'],
+    packages=["srmjg"],
+    scripts = ['src/srmjg/__main__.py'],
     include_package_data=True,
     entry_points={
         'console_scripts': [
-            'srmjg = srmjg:main',
+            'srmjg = srmjg.__main__:main',
         ],
     },
 )
