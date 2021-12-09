@@ -33,7 +33,7 @@ srmjg takes a tab or comma delimited file with five required column headers. Eac
     2. Samtools view
     3. GATK MarkDuplicatesSpark
 ### _Command_:
-    bwa-mem2 -t {CPU_COUNT} -Y -R \"@RG\tID:{queryID}\tPL:ILLUMINA\tLB:{queryID}_to_{refID}\tDS:{queryID}_{queryRun}\tPU:{queryID}_{queryRun}\tSM:{queryID}\" {refpath} {queryR1} {queryR2} | samtools view -bS - > {query_unsorted_bam}; gatk MarkDuplicatesSpark -I {query_unsorted_bam} -O {query_markdups_bam} -M {query_markdups_metrics} --conf 'spark.executor.cores={CPU_COUNT}'
+    bwa-mem2 mem -t {CPU_COUNT} -Y -R \"@RG\tID:{queryID}\tPL:ILLUMINA\tLB:{queryID}_to_{refID}\tDS:{queryID}_{queryRun}\tPU:{queryID}_{queryRun}\tSM:{queryID}\" {refpath} {queryR1} {queryR2} | samtools view -bS - > {query_unsorted_bam}; gatk MarkDuplicatesSpark -I {query_unsorted_bam} -O {query_markdups_bam} -M {query_markdups_metrics} --conf 'spark.executor.cores={CPU_COUNT}'
 
 # Usage:
 srmjg currently supports two different job script types, SLURM job files and bash files for local runs. The SLURM job scripts are based on Texas A&M High Performance Research Computing's SLURM scheduler on their Grace cluster. Visit their [wiki](https://hprc.tamu.edu/wiki/Grace:Batch) for more information on the scheduler and examples of job script types. 
