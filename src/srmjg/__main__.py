@@ -1,7 +1,7 @@
 """
 Author: Andrew Harris
 Email: ajharris@cvm.tamu.edu
-Version: 0.0.4
+Version: 0.0.5
 Last update: 10/21/2021
 """
 import argparse
@@ -427,9 +427,9 @@ def generate_SLRUM_JobFiles(
         sample_markdups_metrics = SLURM_BAM_OUTDIR / f"{sampleID}_to_{refID}.sort.md.metrics.txt"
         sample_completion_file = SLURM_OUTDIR / f"{sampleID}_to_{refID}.complete"
         if SLURM_TMPDIR:
-            command = Rf"""bwa-mem2 mem -t {SLURM_CPUS} -Y -R \"@RG\tID:{sampleID}\tPL:ILLUMINA\tLB:{sampleLibID}\tDS:{sampleID}_{sampleRun}\tPU:{sampleID}_{sampleRun}\tSM:{sampleID}\" {refPath} {sampleR1} {sampleR2} | samtools view -bS - > $TMPDIR/{sample_unsorted_bam.name}; gatk MarkDuplicatesSpark -I $TMPDIR/{sample_unsorted_bam.name} -O {sample_markdups_bam.as_posix()} -M {sample_markdups_metrics.as_posix()} --conf 'spark.executor.cores={SLURM_CPUS}' && touch {sample_completion_file.as_posix()}"""
+            command = Rf"""bwa-mem2 mem -t {SLURM_CPUS} -Y -R "@RG\tID:{sampleID}\tPL:ILLUMINA\tLB:{sampleLibID}\tDS:{sampleID}_{sampleRun}\tPU:{sampleID}_{sampleRun}\tSM:{sampleID}" {refPath} {sampleR1} {sampleR2} | samtools view -bS - > $TMPDIR/{sample_unsorted_bam.name}; gatk MarkDuplicatesSpark -I $TMPDIR/{sample_unsorted_bam.name} -O {sample_markdups_bam.as_posix()} -M {sample_markdups_metrics.as_posix()} --conf 'spark.executor.cores={SLURM_CPUS}' && touch {sample_completion_file.as_posix()}"""
         else:
-            command = Rf"""bwa-mem2 mem -t {SLURM_CPUS} -Y -R \"@RG\tID:{sampleID}\tPL:ILLUMINA\tLB:{sampleLibID}\tDS:{sampleID}_{sampleRun}\tPU:{sampleID}_{sampleRun}\tSM:{sampleID}\" {refPath} {sampleR1} {sampleR2} | samtools view -bS - > {sample_unsorted_bam.as_posix()}; gatk MarkDuplicatesSpark -I {sample_unsorted_bam.as_posix()} -O {sample_markdups_bam.as_posix()} -M {sample_markdups_metrics.as_posix()} --conf 'spark.executor.cores={SLURM_CPUS}' && touch {sample_completion_file.as_posix()}"""
+            command = Rf"""bwa-mem2 mem -t {SLURM_CPUS} -Y -R "@RG\tID:{sampleID}\tPL:ILLUMINA\tLB:{sampleLibID}\tDS:{sampleID}_{sampleRun}\tPU:{sampleID}_{sampleRun}\tSM:{sampleID}" {refPath} {sampleR1} {sampleR2} | samtools view -bS - > {sample_unsorted_bam.as_posix()}; gatk MarkDuplicatesSpark -I {sample_unsorted_bam.as_posix()} -O {sample_markdups_bam.as_posix()} -M {sample_markdups_metrics.as_posix()} --conf 'spark.executor.cores={SLURM_CPUS}' && touch {sample_completion_file.as_posix()}"""
         logger.debug(f"{command}")
     return output_filename, header_formatted, command
 
@@ -453,7 +453,7 @@ def generate_BASH_JobFiles(
         sample_markdups_bam = BASH_BAM_OUTDIR / f"{sampleID}_to_{refID}.sort.md.bam"
         sample_markdups_metrics = BASH_BAM_OUTDIR / f"{sampleID}_to_{refID}.sort.md.metrics.txt"
         sample_completion_file = BASH_OUTDIR / f"{sampleID}_to_{refID}.complete"
-        command = Rf"""bwa-mem2 mem -t {BASH_CPU} -Y -R \"@RG\tID:{sampleID}\tPL:ILLUMINA\tLB:{sampleLibID}\tDS:{sampleID}_{sampleRun}\tPU:{sampleID}_to_{refID}\tSM:{sampleID}\" {refPath} {sampleR1} {sampleR2} | samtools view -bS - > {sample_unsorted_bam.as_posix()}; gatk MarkDuplicatesSpark -I {sample_unsorted_bam.as_posix()} -O {sample_markdups_bam.as_posix()} -M {sample_markdups_metrics.as_posix()} --conf 'spark.executor.cores={BASH_CPU}' && touch {sample_completion_file.as_posix()}"""
+        command = Rf"""bwa-mem2 mem -t {BASH_CPU} -Y -R "@RG\tID:{sampleID}\tPL:ILLUMINA\tLB:{sampleLibID}\tDS:{sampleID}_{sampleRun}\tPU:{sampleID}_to_{refID}\tSM:{sampleID}" {refPath} {sampleR1} {sampleR2} | samtools view -bS - > {sample_unsorted_bam.as_posix()}; gatk MarkDuplicatesSpark -I {sample_unsorted_bam.as_posix()} -O {sample_markdups_bam.as_posix()} -M {sample_markdups_metrics.as_posix()} --conf 'spark.executor.cores={BASH_CPU}' && touch {sample_completion_file.as_posix()}"""
         logger.debug(f"{command}")
     return output_filename, command
 
