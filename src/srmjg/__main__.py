@@ -783,7 +783,7 @@ def main():
             print("INPUT INVALID")
             exit()
         # --- Generate project directory dir script ---
-        project_dir_setup_script(SLURM_OUTDIR, OUTPUT_PATH, logger)
+        project_dir_setup_script(Path(SLURM_OUTDIR), OUTPUT_PATH, logger)
         # --- Project Output Directories ---
         SLURM_OUTDIR = Path(SLURM_OUTDIR)
         SLURM_BAM_OUTDIR = SLURM_OUTDIR / "BAM"
@@ -844,7 +844,7 @@ def main():
             BASH_OUTDIR = args.pdir
             BASH_CPU = args.threads
         # --- Generate project directory dir script ---
-        project_dir_setup_script(BASH_OUTDIR, OUTPUT_PATH, logger)
+        project_dir_setup_script(Path(BASH_OUTDIR), OUTPUT_PATH, logger)
         # --- Project Output Directories ---
         BASH_OUTDIR = Path(BASH_OUTDIR)
         BASH_BAM_OUTDIR = BASH_OUTDIR / "BAM"
