@@ -88,17 +88,18 @@ def get_input_df(INPUT_PATH, logger):
         if df.columns.to_list() != header_list:
             raise InvalidHeader
     except InvalidHeader:
-        print("Input file has invalid column headers - please verify and rerun.")
+        print("Input file has invalid column headers - please verify and rerun")
     return df
 
 
-def project_dir_setup_script(OUTPUT_PATH, logger):
+def project_dir_setup_script(PDIR, OUTPUT_PATH, logger):
     """Writes file that creates requried directories for job files
 
     :param OUTPUT_PATH: Path to output directory
     :type OUTPUT_PATH: pathlib Path object
     """
-    command = f"mkdir BAM"
+    bam_dir = PDIR / "BAM"
+    command = f"mkdir {bam_dir}"
     filename = OUTPUT_PATH / "project_dir_setup.sh"    
     with open(filename, 'w') as oh:
         oh.write(f"{command}")
@@ -143,7 +144,7 @@ def validate_slurm_input(
         else:
             pass
     except SlurmOutDirInvalid:
-        logger.info("No project output directory provided. Ensure one is provided and rerun.")
+        logger.info("No project output directory provided. Ensure one is provided and rerun")
 
     return True
 
@@ -737,7 +738,7 @@ def main():
                 else:
                     pass
             except NoModulesFound:
-                logger.error(f"ERROR: No modules provided, please provide and rerun!")
+                logger.error(f"No modules provided, please provide and rerun")
                 exit()
         else:
             # Parse SLURM input variables
@@ -758,7 +759,7 @@ def main():
                 else:
                     SLURM_MODULES = args.modules
             except NoModulesFound:
-                logger.error(f"ERROR: No modules provided, please provide and rerun!")
+                logger.error(f"No modules provided, please provide and rerun")
                 exit()
         # --- Ensure inputs are valid ---
         result = validate_slurm_input(
@@ -780,7 +781,7 @@ def main():
             print("INPUT INVALID")
             exit()
         # --- Generate project directory dir script ---
-        project_dir_setup_script(OUTPUT_PATH, logger)
+        project_dir_setup_script(SLURM_OUTDIR, OUTPUT_PATH, logger)
         # --- Project Output Directories ---
         SLURM_OUTDIR = Path(SLURM_OUTDIR)
         SLURM_BAM_OUTDIR = SLURM_OUTDIR / "BAM"
@@ -841,7 +842,7 @@ def main():
             BASH_OUTDIR = args.pdir
             BASH_CPU = args.threads
         # --- Generate project directory dir script ---
-        project_dir_setup_script(OUTPUT_PATH, logger)
+        project_dir_setup_script(BASH_OUTDIR, OUTPUT_PATH, logger)
         # --- Project Output Directories ---
         BASH_OUTDIR = Path(BASH_OUTDIR)
         BASH_BAM_OUTDIR = BASH_OUTDIR / "BAM"
