@@ -1,8 +1,7 @@
 """
 Author: Andrew Harris
 Email: ajharris@cvm.tamu.edu
-Version: 0.0.5
-Last update: 10/21/2021
+Version: 0.0.6
 """
 import argparse
 import configparser
@@ -471,7 +470,7 @@ def main():
         type=str,
         action='store',
         default=None,
-        help=".xlsx, .tsv, or .csv file - Required column headers = [sampleID | sampleRun | sampleR1 | sampleR2 | ReferenceID | ReferencePath]",
+        help=".xlsx, .tsv, or .csv file - Required column headers = [QueryID | QueryLibID | QueryRun | QueryR1 | QueryR2 | ReferenceID | ReferencePath]",
         metavar='',
     )
     parser.add_argument(
@@ -670,11 +669,23 @@ def main():
         sys.exit(1)
     else:
         pass
-    # --- Ensure input is a valid path ---
+    # --- Ensure valid input file ---
+    try:
+        INPUT_PATH = Path(INPUT_RAW)
+    except TypeError:
+        print("ERROR: Input not valid")
+        exit()
+    # --- Ensure output is a valid path ---
     try:
         OUTPUT_PATH = Path(OUTPUT_RAW)
     except TypeError:
         print("ERROR: Invalid output location")
+        exit()
+    # --- Ensure valid input file ---
+    try:
+        assert SCHEDULER
+    except TypeError:
+        print("ERROR: No scheduler provided, please choose a scheduler and rerun")
         exit()
     # --- Output SLURM/BASH input parameter config file ---
     if MAKE_SLURM_CONFIG:
@@ -685,12 +696,7 @@ def main():
         output_file = OUTPUT_PATH / 'BASH_config.ini'
         bash_config_template(output_file)
         exit()
-    # --- Ensure valid input file ---
-    try:
-        INPUT_PATH = Path(INPUT_RAW)
-    except TypeError:
-        print("ERROR: Input not valid")
-        exit()
+    
     # --- Initiate log file ---
     LOG_LEVEL = convert_log_level(args.log_level)
     logger = set_logger(args.log, OUTPUT_PATH, LOG_LEVEL)

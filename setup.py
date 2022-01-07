@@ -9,7 +9,7 @@ if sys.version_info[:2] < (3, 7):
 
 setup(
     name="srmjg",
-    version="0.0.5",
+    version="0.0.6",
     author="Andrew Harris",
     author_email="ajharris.2374@gmail.com",
     url="https://github.com/harris-2374/srmjg",
