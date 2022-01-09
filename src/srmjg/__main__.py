@@ -1,7 +1,7 @@
 """
 Author: Andrew Harris
 Email: ajharris@cvm.tamu.edu
-Version: 0.0.7
+Version: 0.0.8
 """
 import argparse
 import configparser
@@ -203,8 +203,8 @@ def generate_SLRUM_JobFiles(
             header.append(f"#SBATCH --time={SLURM_TIME}")
             header.append(f"#SBATCH --ntasks={SLURM_NTASKS}")
             header.append(f"#SBATCH --mem={SLURM_MEMORY}")
-            header.append(f"#SBATCH --output={sampleID}_to_{refID}.%j")
-            header.append(f"#SBATCH --error={sampleID}_to_{refID}.%j")
+            header.append(f"#SBATCH --output={sampleID}_to_{refID}.%j.stdout")
+            header.append(f"#SBATCH --error={sampleID}_to_{refID}.%j.stderr")
             header.append(f"\n## OPTIONAL JOB SPECIFICATIONS")
             if len(SLURM_TIME.split("-")) > 1:
                 split = SLURM_TIME.split("-")
