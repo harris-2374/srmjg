@@ -339,7 +339,7 @@ def generate_SLRUM_JobFiles(
                 except SlurmTMPSizeInvalidSize:
                     logger.info("SLURM_TMPDIR size must be larger than 10240 Mb")
                     exit(1)
-                header.append(ff"#SBATCH --tmp={SLURM_TMPDIR}")
+                header.append(f"#SBATCH --tmp={SLURM_TMPDIR}")
             # -- Add Module Loading --
             header.append('\n')
             SLURM_MODULES = "\n".join(SLURM_MODULES.split(";"))
