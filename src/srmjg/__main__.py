@@ -671,7 +671,10 @@ def main():
         pass
     # --- Ensure valid input file ---
     try:
-        INPUT_PATH = Path(INPUT_RAW)
+        if not INPUT_RAW:
+            pass
+        else:
+            INPUT_PATH = Path(INPUT_RAW)
     except TypeError:
         print("ERROR: Input not valid")
         exit()
