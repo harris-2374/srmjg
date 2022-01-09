@@ -669,26 +669,11 @@ def main():
         sys.exit(1)
     else:
         pass
-    # --- Ensure valid input file ---
-    try:
-        if not INPUT_RAW:
-            pass
-        else:
-            INPUT_PATH = Path(INPUT_RAW)
-    except TypeError:
-        print("ERROR: Input not valid")
-        exit()
     # --- Ensure output is a valid path ---
     try:
         OUTPUT_PATH = Path(OUTPUT_RAW)
     except TypeError:
         print("ERROR: Invalid output location")
-        exit()
-    # --- Ensure valid input file ---
-    try:
-        assert SCHEDULER
-    except TypeError:
-        print("ERROR: No scheduler provided, please choose a scheduler and rerun")
         exit()
     # --- Output SLURM/BASH input parameter config file ---
     if MAKE_SLURM_CONFIG:
@@ -699,7 +684,21 @@ def main():
         output_file = OUTPUT_PATH / 'BASH_config.ini'
         bash_config_template(output_file)
         exit()
-    
+    # --- Ensure valid input file ---
+    try:
+        if not INPUT_RAW:
+            pass
+        else:
+            INPUT_PATH = Path(INPUT_RAW)
+    except TypeError:
+        print("ERROR: Input not valid")
+        exit()
+    # --- Ensure valid scheduler ---
+    try:
+        assert SCHEDULER
+    except TypeError:
+        print("ERROR: No scheduler provided, please choose a scheduler and rerun")
+        exit()
     # --- Initiate log file ---
     LOG_LEVEL = convert_log_level(args.log_level)
     logger = set_logger(args.log, OUTPUT_PATH, LOG_LEVEL)
