@@ -1,13 +1,20 @@
+[![Anaconda-Server Badge](https://anaconda.org/ajharris_2374/srmjg/badges/installer/conda.svg)](https://anaconda.org/ajharris_2374/srmjg)
+
 # Short Read Mapping Job Generator (srmjg)
 Short Read Mapping Job Generator creates job files for short read mapping pipelines and aims to standardize the commands used.
 
 # Installation:
-To install srmjg, clone the git respository locally and run the pip installation
+There are two ways to install srmjg...
 
-    $ git clone https://github.com/harris-2374/srmjg.git
-    $ cd srmjg
-    $ pip install .
+    1. Clone the git respository locally and run the pip installation
+        $ git clone https://github.com/harris-2374/srmjg.git
+        $ cd srmjg
+        $ pip install .
 
+    2. Install through Conda
+        $ conda create -n srmjg
+        $ conda activate srmjg
+        $ conda install -c ajharris_2374 srmjg
 
 # Dependencies:
 Pandas is the only required dependency, but if you plan to use Excel files (.xlsx) you will also need openpyxl. Below are commands for conda enviornments and python virtual environments.
@@ -144,6 +151,15 @@ There are two ways to create jobs, through a config file or by command line argu
 # SLURM Limitations:
 Currently, srmjg does not support GPU jobs and only provides a subset of commonly used SLURM arguments. Open an issue if you would like other features to be added in future versions.
 
+
+
+# FAQ
+
+### I recieved an UnsatisfiableError while installing srmjg through Conda, what should I do?
+    This is likely due to not having the appropriate channels available for Conda. Run the commands below and re-install srmjg. If the error persist, open an issue on GitHub.
+
+    $ conda config --add channels conda-forge
+    $ conda config --add channels bioconda
 
 
 

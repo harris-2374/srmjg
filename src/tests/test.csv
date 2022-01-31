@@ -1,4 +1,4 @@
-QueryID,QeryLibID,QueryRun,QueryR1,QueryR2,ReferenceID,ReferencePath
+QueryID,QueryLibID,QueryRun,QueryR1,QueryR2,ReferenceID,ReferencePath
 Query1,Query1LibA,SRR12345,Query1_R1.fasta,Query1_R2.fasta,RefQuery1,RefQuery1.fasta
 Query2,Query2LibA,SRR12345,Query2_R1.fasta,Query2_R2.fasta,RefQuery1,RefQuery1.fasta
 Query1,Query1LibB,SRR12345,Query1_R1.fasta,Query1_R2.fasta,RefQuery2,RefQuery2.fasta
