@@ -79,7 +79,7 @@ There are two ways to create jobs, through a config file or by command line argu
     --tasks_per_node      Number of tasks to run per-node
     --account             Account number for SU payments
     --email               Email to send job notifications to. Automatically sets --mail-type=ALL
-    --tmp                 Size of $TMPDIR to create - will also output intermediates to $TMPDIR rather than output dir
+    --tmp                 Size/use of $TMPDIR to create. Provide an integer larger than 10240 to specify TMPDIR size or put "True" to simply use the TMPDIR.
 
     BASH arguments:
     --bash_config         config.ini file with BASH arguments

@@ -649,7 +649,7 @@ def main():
         type=int,
         action='store',
         default=None,
-        help='Size of $TMPDIR to create - will output intermediates to $TMPDIR rather than output dir [minSize=10240]',
+        help='Size/use of $TMPDIR to create. Provide an integer larger than 10240 to specify TMPDIR size or put "True" to simply use the TMPDIR.',
         metavar='',
     )
     # -- SLURM Header direct input --
