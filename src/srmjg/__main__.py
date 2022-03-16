@@ -7,6 +7,7 @@ import configparser
 import logging
 import os
 import sys
+from srmjg import __version__
 from pathlib import Path
 ## Dependencies
 import pandas as pd
@@ -151,6 +152,253 @@ def validate_slurm_input(
     return True
 
 
+def slurm_header(
+    sampleID,
+    refID,
+    SLURM_JOBTYPE,
+    SLURM_TIME,
+    SLURM_NODES,
+    SLURM_TASKS_PER_NODE,
+    SLURM_NTASKS,
+    SLURM_MEMORY,
+    SLURM_ACCOUNT,
+    SLURM_EMAIL,
+    SLURM_MODULES,
+    SLURM_TMPDIR,
+    logger,
+):
+    header = []
+    try:
+        if SLURM_JOBTYPE == 'scsn':
+            """
+            #!/bin/bash
+            ##NECESSARY JOB SPECIFICATIONS
+            #SBATCH --job-name=JobExample1       #Set the job name to "JobExample1"
+            #SBATCH --time=01:30:00              #Set the wall clock limit to 1hr and 30min
+            #SBATCH --ntasks=1                   #Request 1 task
+            #SBATCH --mem=2560M                  #Request 2560MB (2.5GB) per node
+            #SBATCH --output=Example1Out.%j      #Send stdout/err to "Example1Out.[jobID]"
+
+            ## OPTIONAL JOB SPECIFICATIONS
+            ##SBATCH --account=123456             #Set billing account to 123456
+            ##SBATCH --mail-type=ALL              #Send email on all job events
+            ##SBATCH --mail-user=email_address    #Send all emails to email_address
+            """
+            # -- Required headers --
+            header.append("#!/bin/bash")
+            header.append(f"#SBATCH --job-name={sampleID}_to_{refID}")
+            header.append(f"#SBATCH --time={SLURM_TIME}")
+            header.append(f"#SBATCH --ntasks={SLURM_NTASKS}")
+            header.append(f"#SBATCH --mem={SLURM_MEMORY}")
+            header.append(f"#SBATCH --output={sampleID}_to_{refID}.%j.stdout")
+            header.append(f"#SBATCH --error={sampleID}_to_{refID}.%j.stderr")
+            header.append(f"\n## OPTIONAL JOB SPECIFICATIONS")
+            if len(SLURM_TIME.split("-")) > 1:
+                split = SLURM_TIME.split("-")
+                if int(split[0]) > 7:
+                    header.append("#SBATCH --partition xlong")
+                else:
+                    pass
+            if SLURM_ACCOUNT:
+                header.append(f"#SBATCH --account={SLURM_ACCOUNT}")
+            if SLURM_EMAIL:
+                header.append("#SBATCH --mail-type=ALL")
+                header.append(f"#SBATCH --mail-user={SLURM_EMAIL}")
+            if SLURM_TMPDIR:
+                try:
+                    if type(SLURM_TMPDIR) == bool:
+                        pass
+                    elif (type(SLURM_TMPDIR) == int) and (SLURM_TMPDIR < 10240):
+                        raise SlurmTMPSizeInvalidSize
+                    else:
+                        header.append(f"#SBATCH --tmp={SLURM_TMPDIR}")
+                except SlurmTMPSizeInvalidType:
+                    logger.info("SLURM_TMPDIR input type is invalid")
+                    exit(1)
+                except SlurmTMPSizeInvalidSize:
+                    logger.info("SLURM_TMPDIR size must be larger than 10240 Mb")
+                    exit(1)
+            # -- Add Module Loading --
+            header.append('')
+            SLURM_MODULES = "\n".join(SLURM_MODULES.split(";"))
+            header.append(f"{SLURM_MODULES}")
+            return header
+        elif SLURM_JOBTYPE == 'mcsn':
+            """
+            #!/bin/bash
+            ##NECESSARY JOB SPECIFICATIONS
+            #SBATCH --job-name=JobExample2       #Set the job name to "JobExample2"
+            #SBATCH --time=6:30:00               #Set the wall clock limit to 6hr and 30min
+            #SBATCH --nodes=1                    #Request 1 node
+            #SBATCH --ntasks-per-node=8          #Request 8 tasks/cores per node
+            #SBATCH --mem=8G                     #Request 8GB per node 
+            #SBATCH --output=Example2Out.%j      #Send stdout/err to "Example2Out.[jobID]" 
+
+            ## OPTIONAL JOB SPECIFICATIONS
+            ##SBATCH --account=123456             #Set billing account to 123456
+            ##SBATCH --mail-type=ALL              #Send email on all job events
+            ##SBATCH --mail-user=email_address    #Send all emails to email_address 
+            """
+            # -- Required headers --
+            header.append("#!/bin/bash")
+            header.append(f"#SBATCH --job-name={sampleID}_to_{refID}")
+            header.append(f"#SBATCH --time={SLURM_TIME}")
+            header.append(f"#SBATCH --nodes=1")
+            header.append(f"#SBATCH --ntasks-per-node={SLURM_TASKS_PER_NODE}")
+            header.append(f"#SBATCH --mem={SLURM_MEMORY}")
+            header.append(f"#SBATCH --output={sampleID}_to_{refID}.%j")
+            header.append(f"#SBATCH --error={sampleID}_to_{refID}.%j")
+            header.append(f"\n## OPTIONAL JOB SPECIFICATIONS")
+            if len(SLURM_TIME.split("-")) > 1:
+                split = SLURM_TIME.split("-")
+                if int(split[0]) > 7:
+                    header.append("#SBATCH --partition xlong")
+                else:
+                    pass
+            if SLURM_ACCOUNT:
+                header.append(f"#SBATCH --account={SLURM_ACCOUNT}")
+            if SLURM_EMAIL:
+                header.append("#SBATCH --mail-type=ALL")
+                header.append(f"#SBATCH --mail-user={SLURM_EMAIL}")
+            if SLURM_TMPDIR:
+                try:
+                    if type(SLURM_TMPDIR) == bool:
+                        pass
+                    elif (type(SLURM_TMPDIR) == int) and (SLURM_TMPDIR < 10240):
+                        raise SlurmTMPSizeInvalidSize
+                    else:
+                        header.append(f"#SBATCH --tmp={SLURM_TMPDIR}")
+                except SlurmTMPSizeInvalidType:
+                    logger.info("SLURM_TMPDIR input type is invalid")
+                    exit(1)
+                except SlurmTMPSizeInvalidSize:
+                    logger.info("SLURM_TMPDIR size must be larger than 10240 Mb")
+                    exit(1)
+            # -- Add Module Loading --
+            header.append('\n')
+            SLURM_MODULES = "\n".join(SLURM_MODULES.split(";"))
+            header.append(f"{SLURM_MODULES}")
+            return header
+        elif SLURM_JOBTYPE == 'mcmn':
+            """
+            #!/bin/bash
+            ##NECESSARY JOB SPECIFICATIONS
+            #SBATCH --job-name=JobExample3       #Set the job name to "JobExample3"
+            #SBATCH --time=1-12:00:00            #Set the wall clock limit to 1 Day and 12hr
+            #SBATCH --ntasks=8                   #Request 8 tasks
+            #SBATCH --ntasks-per-node=2          #Request 2 tasks/cores per node
+            #SBATCH --mem=4096M                  #Request 4096MB (4GB) per node 
+            #SBATCH --output=Example3Out.%j      #Send stdout/err to "Example3Out.[jobID]"
+            
+            ## OPTIONAL JOB SPECIFICATIONS
+            ##SBATCH --account=123456             #Set billing account to 123456
+            ##SBATCH --mail-type=ALL              #Send email on all job events
+            ##SBATCH --mail-user=email_address    #Send all emails to email_address 
+            """
+            # -- Required headers --
+            header.append("#!/bin/bash")
+            header.append(f"#SBATCH --job-name={sampleID}_to_{refID}")
+            header.append(f"#SBATCH --time={SLURM_TIME}")
+            header.append(f"#SBATCH --ntasks={SLURM_NTASKS}")
+            header.append(f"#SBATCH --ntasks-per-node={SLURM_TASKS_PER_NODE}")
+            header.append(f"#SBATCH --mem={SLURM_MEMORY}")
+            header.append(f"#SBATCH --output={sampleID}_to_{refID}.%j")
+            header.append(f"#SBATCH --error={sampleID}_to_{refID}.%j")
+            header.append(f"\n## OPTIONAL JOB SPECIFICATIONS")
+            if len(SLURM_TIME.split("-")) > 1:
+                split = SLURM_TIME.split("-")
+                if int(split[0]) > 7:
+                    header.append("#SBATCH --partition xlong")
+                else:
+                    pass
+            if SLURM_ACCOUNT:
+                header.append(f"#SBATCH --account={SLURM_ACCOUNT}")
+            if SLURM_EMAIL:
+                header.append("#SBATCH --mail-type=ALL")
+                header.append(f"#SBATCH --mail-user={SLURM_EMAIL}")
+            if SLURM_TMPDIR:
+                try:
+                    if type(SLURM_TMPDIR) == bool:
+                        pass
+                    elif (type(SLURM_TMPDIR) == int) and (SLURM_TMPDIR < 10240):
+                        raise SlurmTMPSizeInvalidSize
+                    else:
+                        header.append(f"#SBATCH --tmp={SLURM_TMPDIR}")
+                except SlurmTMPSizeInvalidType:
+                    logger.info("SLURM_TMPDIR input type is invalid")
+                    exit(1)
+                except SlurmTMPSizeInvalidSize:
+                    logger.info("SLURM_TMPDIR size must be larger than 10240 Mb")
+                    exit(1)
+            # -- Add Module Loading --
+            header.append('\n')
+            SLURM_MODULES = "\n".join(SLURM_MODULES.split(";"))
+            header.append(f"{SLURM_MODULES}")
+            return header
+        elif SLURM_JOBTYPE == 'custom':
+            """
+            #!/bin/bash
+            ##NECESSARY JOB SPECIFICATIONS
+            #SBATCH --job-name=JobExample3       #Set the job name to "JobExample3"
+            #SBATCH --time=1-12:00:00            #Set the wall clock limit to 1 Day and 12hr
+            #SBATCH --ntasks=8                   #Request 8 tasks
+            #SBATCH --ntasks-per-node=2          #Request 2 tasks/cores per node
+            #SBATCH --mem=4096M                  #Request 4096MB (4GB) per node 
+            #SBATCH --output=Example3Out.%j      #Send stdout/err to "Example3Out.[jobID]"
+            
+            ## OPTIONAL JOB SPECIFICATIONS
+            ##SBATCH --account=123456             #Set billing account to 123456
+            ##SBATCH --mail-type=ALL              #Send email on all job events
+            ##SBATCH --mail-user=email_address    #Send all emails to email_address 
+            """
+            # -- Required headers --
+            header.append("#!/bin/bash")
+            header.append(f"#SBATCH --job-name={sampleID}_to_{refID}")
+            header.append(f"#SBATCH --time={SLURM_TIME}")
+            header.append(f"#SBATCH --ntasks={SLURM_NTASKS}")
+            header.append(f"#SBATCH --ntasks-per-node={SLURM_TASKS_PER_NODE}")
+            header.append(f"#SBATCH --mem={SLURM_MEMORY}")
+            header.append(f"#SBATCH --output={sampleID}_to_{refID}.%j")
+            header.append(f"#SBATCH --error={sampleID}_to_{refID}.%j")
+            header.append(f"\n## OPTIONAL JOB SPECIFICATIONS")
+            if len(SLURM_TIME.split("-")) > 1:
+                split = SLURM_TIME.split("-")
+                if int(split[0]) > 7:
+                    header.append("#SBATCH --partition xlong")
+                else:
+                    pass
+            if SLURM_ACCOUNT:
+                header.append(f"#SBATCH --account={SLURM_ACCOUNT}")
+            if SLURM_EMAIL:
+                header.append("#SBATCH --mail-type=ALL")
+                header.append(f"#SBATCH --mail-user={SLURM_EMAIL}")
+            if SLURM_TMPDIR:
+                try:
+                    if type(SLURM_TMPDIR) == bool:
+                        pass
+                    elif (type(SLURM_TMPDIR) == int) and (SLURM_TMPDIR < 10240):
+                        raise SlurmTMPSizeInvalidSize
+                    else:
+                        header.append(f"#SBATCH --tmp={SLURM_TMPDIR}")
+                except SlurmTMPSizeInvalidType:
+                    logger.info("SLURM_TMPDIR input type is invalid")
+                    exit(1)
+                except SlurmTMPSizeInvalidSize:
+                    logger.info("SLURM_TMPDIR size must be larger than 10240 Mb")
+                    exit(1)
+                
+            # -- Add Module Loading --
+            header.append('\n')
+            SLURM_MODULES = "\n".join(SLURM_MODULES.split(";"))
+            header.append(f"{SLURM_MODULES}")
+            return header
+        else:
+            raise SlurmInvalidJobType
+    except SlurmInvalidJobType:
+        logger.error(f"Job type '{SLURM_JOBTYPE}' is invalid - must be one of [scsn, mcsn, mcmn, custom]")
+        exit(1)
+
+
 def generate_SLRUM_JobFiles(
     row,
     OUTPUT_PATH,
@@ -170,246 +418,7 @@ def generate_SLRUM_JobFiles(
     SLURM_MODULES,
     logger,
 ):
-    def slurm_header(
-        sampleID,
-        refID,
-        SLURM_JOBTYPE,
-        SLURM_TIME,
-        SLURM_NODES,
-        SLURM_TASKS_PER_NODE,
-        SLURM_NTASKS,
-        SLURM_MEMORY,
-        SLURM_ACCOUNT,
-        SLURM_EMAIL,
-        SLURM_MODULES,
-        SLURM_TMPDIR,
-    ):
-        header = []
-        try:
-            if SLURM_JOBTYPE == 'scsn':
-                """
-                #!/bin/bash
-                ##NECESSARY JOB SPECIFICATIONS
-                #SBATCH --job-name=JobExample1       #Set the job name to "JobExample1"
-                #SBATCH --time=01:30:00              #Set the wall clock limit to 1hr and 30min
-                #SBATCH --ntasks=1                   #Request 1 task
-                #SBATCH --mem=2560M                  #Request 2560MB (2.5GB) per node
-                #SBATCH --output=Example1Out.%j      #Send stdout/err to "Example1Out.[jobID]"
-
-                ## OPTIONAL JOB SPECIFICATIONS
-                ##SBATCH --account=123456             #Set billing account to 123456
-                ##SBATCH --mail-type=ALL              #Send email on all job events
-                ##SBATCH --mail-user=email_address    #Send all emails to email_address
-                """
-                # -- Required headers --
-                header.append("#!/bin/bash")
-                header.append(f"#SBATCH --job-name={sampleID}_to_{refID}")
-                header.append(f"#SBATCH --time={SLURM_TIME}")
-                header.append(f"#SBATCH --ntasks={SLURM_NTASKS}")
-                header.append(f"#SBATCH --mem={SLURM_MEMORY}")
-                header.append(f"#SBATCH --output={sampleID}_to_{refID}.%j.stdout")
-                header.append(f"#SBATCH --error={sampleID}_to_{refID}.%j.stderr")
-                header.append(f"\n## OPTIONAL JOB SPECIFICATIONS")
-                if len(SLURM_TIME.split("-")) > 1:
-                    split = SLURM_TIME.split("-")
-                    if int(split[0]) > 7:
-                        header.append("#SBATCH --partition xlong")
-                    else:
-                        pass
-                if SLURM_ACCOUNT:
-                    header.append(f"#SBATCH --account={SLURM_ACCOUNT}")
-                if SLURM_EMAIL:
-                    header.append("#SBATCH --mail-type=ALL")
-                    header.append(f"#SBATCH --mail-user={SLURM_EMAIL}")
-                if SLURM_TMPDIR:
-                    try:
-                        if type(SLURM_TMPDIR) != int:
-                            raise SlurmTMPSizeInvalidType
-                        elif SLURM_TMPDIR < 10240:
-                            raise SlurmTMPSizeInvalidSize
-                    except SlurmTMPSizeInvalidType:
-                        logger.info("SLURM_TMPDIR input type is invalid")
-                        exit(1)
-                    except SlurmTMPSizeInvalidSize:
-                        logger.info("SLURM_TMPDIR size must be larger than 10240 Mb")
-                        exit(1)
-                    header.append(f"#SBATCH --tmp={SLURM_TMPDIR}")
-                # -- Add Module Loading --
-                header.append('')
-                SLURM_MODULES = "\n".join(SLURM_MODULES.split(";"))
-                header.append(f"{SLURM_MODULES}")
-                return header
-            elif SLURM_JOBTYPE == 'mcsn':
-                """
-                #!/bin/bash
-                ##NECESSARY JOB SPECIFICATIONS
-                #SBATCH --job-name=JobExample2       #Set the job name to "JobExample2"
-                #SBATCH --time=6:30:00               #Set the wall clock limit to 6hr and 30min
-                #SBATCH --nodes=1                    #Request 1 node
-                #SBATCH --ntasks-per-node=8          #Request 8 tasks/cores per node
-                #SBATCH --mem=8G                     #Request 8GB per node 
-                #SBATCH --output=Example2Out.%j      #Send stdout/err to "Example2Out.[jobID]" 
-
-                ## OPTIONAL JOB SPECIFICATIONS
-                ##SBATCH --account=123456             #Set billing account to 123456
-                ##SBATCH --mail-type=ALL              #Send email on all job events
-                ##SBATCH --mail-user=email_address    #Send all emails to email_address 
-                """
-                # -- Required headers --
-                header.append("#!/bin/bash")
-                header.append(f"#SBATCH --job-name={sampleID}_to_{refID}")
-                header.append(f"#SBATCH --time={SLURM_TIME}")
-                header.append(f"#SBATCH --nodes=1")
-                header.append(f"#SBATCH --ntasks-per-node={SLURM_TASKS_PER_NODE}")
-                header.append(f"#SBATCH --mem={SLURM_MEMORY}")
-                header.append(f"#SBATCH --output={sampleID}_to_{refID}.%j")
-                header.append(f"#SBATCH --error={sampleID}_to_{refID}.%j")
-                header.append(f"\n## OPTIONAL JOB SPECIFICATIONS")
-                if len(SLURM_TIME.split("-")) > 1:
-                    split = SLURM_TIME.split("-")
-                    if int(split[0]) > 7:
-                        header.append("#SBATCH --partition xlong")
-                    else:
-                        pass
-                if SLURM_ACCOUNT:
-                    header.append(f"#SBATCH --account={SLURM_ACCOUNT}")
-                if SLURM_EMAIL:
-                    header.append("#SBATCH --mail-type=ALL")
-                    header.append(f"#SBATCH --mail-user={SLURM_EMAIL}")
-                if SLURM_TMPDIR:
-                    try:
-                        if type(SLURM_TMPDIR) != int:
-                            raise SlurmTMPSizeInvalidType
-                        elif SLURM_TMPDIR < 10240:
-                            raise SlurmTMPSizeInvalidSize
-                    except SlurmTMPSizeInvalidType:
-                        logger.info("SLURM_TMPDIR input type is invalid")
-                        exit(1)
-                    except SlurmTMPSizeInvalidSize:
-                        logger.info("SLURM_TMPDIR size must be larger than 10240 Mb")
-                        exit(1)
-                    header.append(f"#SBATCH --tmp={SLURM_TMPDIR}")
-                # -- Add Module Loading --
-                header.append('\n')
-                SLURM_MODULES = "\n".join(SLURM_MODULES.split(";"))
-                header.append(f"{SLURM_MODULES}")
-                return header
-            elif SLURM_JOBTYPE == 'mcmn':
-                """
-                #!/bin/bash
-                ##NECESSARY JOB SPECIFICATIONS
-                #SBATCH --job-name=JobExample3       #Set the job name to "JobExample3"
-                #SBATCH --time=1-12:00:00            #Set the wall clock limit to 1 Day and 12hr
-                #SBATCH --ntasks=8                   #Request 8 tasks
-                #SBATCH --ntasks-per-node=2          #Request 2 tasks/cores per node
-                #SBATCH --mem=4096M                  #Request 4096MB (4GB) per node 
-                #SBATCH --output=Example3Out.%j      #Send stdout/err to "Example3Out.[jobID]"
-                
-                ## OPTIONAL JOB SPECIFICATIONS
-                ##SBATCH --account=123456             #Set billing account to 123456
-                ##SBATCH --mail-type=ALL              #Send email on all job events
-                ##SBATCH --mail-user=email_address    #Send all emails to email_address 
-                """
-                # -- Required headers --
-                header.append("#!/bin/bash")
-                header.append(f"#SBATCH --job-name={sampleID}_to_{refID}")
-                header.append(f"#SBATCH --time={SLURM_TIME}")
-                header.append(f"#SBATCH --ntasks={SLURM_NTASKS}")
-                header.append(f"#SBATCH --ntasks-per-node={SLURM_TASKS_PER_NODE}")
-                header.append(f"#SBATCH --mem={SLURM_MEMORY}")
-                header.append(f"#SBATCH --output={sampleID}_to_{refID}.%j")
-                header.append(f"#SBATCH --error={sampleID}_to_{refID}.%j")
-                header.append(f"\n## OPTIONAL JOB SPECIFICATIONS")
-                if len(SLURM_TIME.split("-")) > 1:
-                    split = SLURM_TIME.split("-")
-                    if int(split[0]) > 7:
-                        header.append("#SBATCH --partition xlong")
-                    else:
-                        pass
-                if SLURM_ACCOUNT:
-                    header.append(f"#SBATCH --account={SLURM_ACCOUNT}")
-                if SLURM_EMAIL:
-                    header.append("#SBATCH --mail-type=ALL")
-                    header.append(f"#SBATCH --mail-user={SLURM_EMAIL}")
-                if SLURM_TMPDIR:
-                    try:
-                        if type(SLURM_TMPDIR) != int:
-                            raise SlurmTMPSizeInvalidType
-                        elif SLURM_TMPDIR < 10240:
-                            raise SlurmTMPSizeInvalidSize
-                    except SlurmTMPSizeInvalidType:
-                        logger.info("SLURM_TMPDIR input type is invalid")
-                        exit(1)
-                    except SlurmTMPSizeInvalidSize:
-                        logger.info("SLURM_TMPDIR size must be larger than 10240 Mb")
-                        exit(1)
-                    header.append(f"#SBATCH --tmp={SLURM_TMPDIR}")
-                # -- Add Module Loading --
-                header.append('\n')
-                SLURM_MODULES = "\n".join(SLURM_MODULES.split(";"))
-                header.append(f"{SLURM_MODULES}")
-                return header
-            elif SLURM_JOBTYPE == 'custom':
-                """
-                #!/bin/bash
-                ##NECESSARY JOB SPECIFICATIONS
-                #SBATCH --job-name=JobExample3       #Set the job name to "JobExample3"
-                #SBATCH --time=1-12:00:00            #Set the wall clock limit to 1 Day and 12hr
-                #SBATCH --ntasks=8                   #Request 8 tasks
-                #SBATCH --ntasks-per-node=2          #Request 2 tasks/cores per node
-                #SBATCH --mem=4096M                  #Request 4096MB (4GB) per node 
-                #SBATCH --output=Example3Out.%j      #Send stdout/err to "Example3Out.[jobID]"
-                
-                ## OPTIONAL JOB SPECIFICATIONS
-                ##SBATCH --account=123456             #Set billing account to 123456
-                ##SBATCH --mail-type=ALL              #Send email on all job events
-                ##SBATCH --mail-user=email_address    #Send all emails to email_address 
-                """
-                # -- Required headers --
-                header.append("#!/bin/bash")
-                header.append(f"#SBATCH --job-name={sampleID}_to_{refID}")
-                header.append(f"#SBATCH --time={SLURM_TIME}")
-                header.append(f"#SBATCH --ntasks={SLURM_NTASKS}")
-                header.append(f"#SBATCH --ntasks-per-node={SLURM_TASKS_PER_NODE}")
-                header.append(f"#SBATCH --mem={SLURM_MEMORY}")
-                header.append(f"#SBATCH --output={sampleID}_to_{refID}.%j")
-                header.append(f"#SBATCH --error={sampleID}_to_{refID}.%j")
-                header.append(f"\n## OPTIONAL JOB SPECIFICATIONS")
-                if len(SLURM_TIME.split("-")) > 1:
-                    split = SLURM_TIME.split("-")
-                    if int(split[0]) > 7:
-                        header.append("#SBATCH --partition xlong")
-                    else:
-                        pass
-                if SLURM_ACCOUNT:
-                    header.append(f"#SBATCH --account={SLURM_ACCOUNT}")
-                if SLURM_EMAIL:
-                    header.append("#SBATCH --mail-type=ALL")
-                    header.append(f"#SBATCH --mail-user={SLURM_EMAIL}")
-                if SLURM_TMPDIR:
-                    try:
-                        if type(SLURM_TMPDIR) != int:
-                            raise SlurmTMPSizeInvalidType
-                        elif SLURM_TMPDIR < 10240:
-                            raise SlurmTMPSizeInvalidSize
-                    except SlurmTMPSizeInvalidType:
-                        logger.info("SLURM_TMPDIR input type is invalid")
-                        exit(1)
-                    except SlurmTMPSizeInvalidSize:
-                        logger.info("SLURM_TMPDIR size must be larger than 10240 Mb")
-                        exit(1)
-                    header.append(f"#SBATCH --tmp={SLURM_TMPDIR}")
-                # -- Add Module Loading --
-                header.append('\n')
-                SLURM_MODULES = "\n".join(SLURM_MODULES.split(";"))
-                header.append(f"{SLURM_MODULES}")
-                return header
-            else:
-                raise SlurmInvalidJobType
-        except SlurmInvalidJobType:
-            logger.error(f"Job type '{SLURM_JOBTYPE}' is invalid - must be one of [scsn, mcsn, mcmn, custom]")
-            exit(1)
-
+    
     sampleID, sampleLibID, sampleRun, sampleR1, sampleR2, refID, refPath = row
     output_filename = OUTPUT_PATH / f"{sampleID}_to_{refID}.sh"
     # -- Generate header --
@@ -426,6 +435,7 @@ def generate_SLRUM_JobFiles(
         SLURM_EMAIL,
         SLURM_MODULES,
         SLURM_TMPDIR,
+        logger,
     )
     header_formatted = "\n".join(header)
     # -- Generate command --
@@ -539,6 +549,11 @@ def main():
         default=None,
         help='Output directory for job scripts - Path where intermediate and final job files will be written to.',
         metavar='',
+    )
+    parser.add_argument(
+        '-v', '--version',
+        action='version',
+        version='%(prog)s ' + __version__
     )
     # SLURM specific input parameters - (copies of options in config file)
     slurm = parser.add_argument_group('SLURM arguments')
@@ -742,13 +757,15 @@ def main():
             SLURM_EMAIL = config['SLURM INPUT']['email']
             SLURM_MODULES = config['SLURM INPUT']['modules']
             SLURM_JOBTYPE = config['SLURM INPUT']['job_type']
+            if not config['SLURM INPUT']['tmp']:
+                    SLURM_TMPDIR = None
+                    pass
             try:
                 SLURM_TMPDIR = int(config['SLURM INPUT']['tmp'])
             except ValueError:
-                if not config['SLURM INPUT']['tmp']:
-                    SLURM_TMPDIR = None
-                    pass
-                else:
+                try:
+                    SLURM_TMPDIR = bool(config['SLURM INPUT']['tmp'])
+                except:
                     logger.info(f"Invalid value for tmp - must be integer larger than 10240")
                     exit(1)
             try:
