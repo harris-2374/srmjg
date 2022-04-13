@@ -3,9 +3,7 @@
 # Short Read Mapping Job Generator (srmjg)
 Short Read Mapping Job Generator creates job files for short read mapping pipelines and aims to standardize the commands used.
 
-# Installation:
-There are two ways to install srmjg...
-
+# Installation
     1. Clone the git respository locally and run the pip installation
         $ git clone https://github.com/harris-2374/srmjg.git
         $ cd srmjg
@@ -16,14 +14,14 @@ There are two ways to install srmjg...
         $ conda activate srmjgenv
         $ conda install -c ajharris_2374 srmjg
 
-# Dependencies:
+# Dependencies
 Pandas is the only required dependency, but if you plan to use Excel files (.xlsx) you will also need openpyxl. Below are commands for conda enviornments and python virtual environments.
 
     $ conda install python=3.9.5 pandas openpyxl 
     - or - 
     $ pip install -r requirements.txt
 
-# Input file format:
+# Input file format
 srmjg takes a tab or comma delimited file with five required column headers. Each row represents an individual mapping event, so this can be used to make mass job files with a combination of reference-query pairs. 
 
 | QueryID | QueryLibID | QueryRun | QueryR1 | QueryR2 | ReferenceID | ReferencePath |
@@ -34,7 +32,7 @@ srmjg takes a tab or comma delimited file with five required column headers. Eac
 | SampleB | SampleLibB | SRR789101 | /path/to/SampleB_R1.fastq | /path/to/SampleB_R2.fastq | Reference2 | /path/to/Reference2.fasta |
 
 
-# bwa-mem2 Alignment Pipeline:
+# bwa-mem2 Alignment Pipeline
 ### _Steps_:
     1. bwa-mem2
     2. Samtools view
@@ -42,7 +40,7 @@ srmjg takes a tab or comma delimited file with five required column headers. Eac
 ### _Command_:
     bwa-mem2 mem -t {CPU_COUNT} -Y -R "@RG\tID:{queryID}\tPL:ILLUMINA\tLB:{queryID}_to_{refID}\tDS:{queryID}_{queryRun}\tPU:{queryID}_{queryRun}\tSM:{queryID}" {refpath} {queryR1} {queryR2} | samtools view -bS - > {query_unsorted_bam}; gatk MarkDuplicatesSpark -I {query_unsorted_bam} -O {query_markdups_bam} -M {query_markdups_metrics} --conf 'spark.executor.cores={CPU_COUNT}'
 
-# Usage:
+# Usage
 srmjg currently supports two different job script types, SLURM job files and bash files for local runs. The SLURM job scripts are based on Texas A&M High Performance Research Computing's SLURM scheduler on their Grace cluster. Visit their [wiki](https://hprc.tamu.edu/wiki/Grace:Batch) for more information on the scheduler and examples of job script types. 
 
 There are two ways to create jobs, through a config file or by command line arguments. Config files are reccomended as they are easier to set up and are better for tracking and reproducibility purposes.
@@ -85,7 +83,7 @@ There are two ways to create jobs, through a config file or by command line argu
     --bash_config         config.ini file with BASH arguments
     --threads             Number of threads/cpus per-job
 
-# Example Commands:
+# Example Commands
     SLURM command with configuration file:
         $ srmjg -i ./tests/input.xlsx -o ./tests/output --scheduler SLURM --slurm_config SLURM_config.ini
     
@@ -99,7 +97,7 @@ There are two ways to create jobs, through a config file or by command line argu
         $ srmjg -i ./tests/input.xlsx -o ./tests/output --scheduler BASH --pdir project/dir/path --threads 5
 
 
-# Supported SLURM arguments:
+# Supported SLURM arguments
     1. #SBATCH --time=<time>
         - Input style = day-hr:min:sec
 
@@ -126,7 +124,7 @@ There are two ways to create jobs, through a config file or by command line argu
         - Provide in MB
         - If provided, writes all but last output file to $TMPDIR
 
-# Example SLURM config file (i.e. slurm_config.ini):
+# Example SLURM config file (i.e. slurm_config.ini)
     [SLURM INPUT]
     project_directory = project/dir/path
     job_type = snsc
@@ -142,13 +140,13 @@ There are two ways to create jobs, through a config file or by command line argu
     tmp = 
     modules = 
 
-# Example Bash config file (i.e. bash_config.ini):
+# Example Bash config file (i.e. bash_config.ini)
     [BASH INPUT]
     project_directory = project/dir/path
     threads = 1
 
 
-# SLURM Limitations:
+# SLURM Limitations
 Currently, srmjg does not support GPU jobs and only provides a subset of commonly used SLURM arguments. Open an issue if you would like other features to be added in future versions.
 
 
