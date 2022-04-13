@@ -12,8 +12,8 @@ There are two ways to install srmjg...
         $ pip install .
 
     2. Install through Conda
-        $ conda create -n srmjg
-        $ conda activate srmjg
+        $ conda create -n srmjgenv
+        $ conda activate srmjgenv
         $ conda install -c ajharris_2374 srmjg
 
 # Dependencies:
